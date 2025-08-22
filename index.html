@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Challenge - Ball Sequence Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #2c3e50;
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header styling to match original exactly */
+    .header {
+      background: #34495e;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #2c3e50;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      background: #95a5a6;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .control-btn:hover {
+      background: #bdc3c7;
+    }
+
+    .level-indicator {
+      background: #34495e;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .progress-container {
+      flex: 1;
+      max-width: 600px;
+      margin: 0 20px;
+      position: relative;
+    }
+
+    .progress-bar {
+      background: white;
+      height: 40px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: #e67e22;
+      height: 100%;
+      border-radius: 20px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #8B0000;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .timer {
+      background: #95a5a6;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .game-title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* Main content area */
+    .main-content {
+      flex: 1;
+      position: relative;
+      background: #ecf0f1;
+    }
+
+    /* Symmetry overlay with clear separation */
+    .symmetry-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ecf0f1;
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+    }
+
+    .symmetry-header {
+      background: #95a5a6;
+      padding: 15px;
+      text-align: right;
+      font-size: 28px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .symmetry-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .symmetry-question {
+      font-size: 24px;
+      color: #7f8c8d;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .grid-container {
+      background: #bdc3c7;
+      padding: 50px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Enhanced symmetry grid with CLEAR VISUAL SEPARATION */
+    .symmetry-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 35px) 80px repeat(5, 35px);
+      grid-template-rows: repeat(5, 35px);
+      gap: 8px; 
+      margin-bottom: 20px;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* VERTICAL DIVIDER LINE for clear symmetry axis */
+    .symmetry-grid::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: -10px;
+      bottom: -10px;
+      width: 3px;
+      background: #e74c3c;
+      transform: translateX(-50%);
+      z-index: 10;
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+    }
+
+    /* SYMMETRY AXIS LABEL */
+    .symmetry-grid::after {
+      content: 'SYMMETRY AXIS';
+      position: absolute;
+      left: 50%;
+      top: -40px;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: bold;
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .grid-cell {
+      width: 35px;
+      height: 35px;
+      background: #34495e;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+
+    /* Hide the middle column (symmetry axis) */
+    .grid-cell:nth-child(6),
+    .grid-cell:nth-child(17),
+    .grid-cell:nth-child(28),
+    .grid-cell:nth-child(39),
+    .grid-cell:nth-child(50) {
+      visibility: hidden;
+    }
+
+    .grid-cell:hover {
+      transform: scale(1.05);
+    }
+
+    .grid-cell.dot {
+      background: #34495e;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      margin: 11.5px auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .symmetry-buttons {
+      display: flex;
+      gap: 40px;
+    }
+
+    .symmetry-btn {
+      width: 200px;
+      height: 80px;
+      border: none;
+      border-radius: 15px;
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .symmetry-btn.yes {
+      background: #16537e;
+    }
+
+    .symmetry-btn.no {
+      background: #16537e;
+    }
+
+    .symmetry-btn:hover {
+      opacity: 0.8;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Game board */
+    .game-board {
+      width: 100%;
+      height: 100%;
+      background: #bdc3c7;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-instruction {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(52, 73, 94, 0.9);
+      padding: 15px 30px;
+      border-radius: 25px;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      z-index: 100;
+    }
+
+    /* UNIFORM BALL STYLING - All balls same color initially */
+    .ball {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      /* ALL BALLS SAME COLOR - neutral gray */
+      background: #95a5a6;
+      color: #2c3e50;
+    }
+
+    /* Active ball gets bright color */
+    .ball.active {
+      background: #f39c12 !important;
+      transform: scale(1.3);
+      box-shadow: 0 6px 15px rgba(243, 156, 18, 0.6);
+      color: white !important;
+      animation: ballPulse 0.8s ease-in-out;
+    }
+
+    @keyframes ballPulse {
+      0%, 100% { transform: scale(1.3); }
+      50% { transform: scale(1.5); }
+    }
+
+    .ball.correct {
+      background: #27ae60 !important;
+      color: white !important;
+    }
+
+    .ball.correct::after {
+      content: "✓";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .ball.wrong {
+      background: #e74c3c !important;
+      color: white !important;
+    }
+
+    .ball.wrong::after {
+      content: "✕";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    /* Selection phase styling - balls clicked in sequence */
+    .ball.selected {
+      background: #3498db !important;
+      color: white !important;
+      transform: scale(1.1);
+      border: 3px solid #2980b9;
+    }
+
+    .ball.selected::after {
+      content: attr(data-sequence-number);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    /* Start screen with timing controls */
+    .start-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #bdc3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+
+    .start-content {
+      text-align: center;
+      background: rgba(44, 62, 80, 0.95);
+      padding: 40px 50px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      max-width: 500px;
+    }
+
+    .start-title {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #f1c40f;
+    }
+
+    .start-instruction {
+      font-size: 18px;
+      margin-bottom: 30px;
+      opacity: 0.9;
+      color: white;
+    }
+
+    .timing-controls {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 30px;
+    }
+
+    .timing-input {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .timing-label {
+      font-size: 16px;
+      font-weight: bold;
+      color: #ecf0f1;
+    }
+
+    .timing-slider {
+      width: 150px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .start-btn {
+      padding: 15px 40px;
+      font-size: 24px;
+      font-weight: bold;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .start-btn:hover {
+      background: #2ecc71;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    }
+
+    /* MINIMAL selection progress at bottom - NO BLOCKING OVERLAY */
+    .selection-progress {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(52, 73, 94, 0.9);
+      padding: 12px 25px;
+      border-radius: 15px;
+      display: none;
+      z-index: 200;
+    }
+
+    .progress-info {
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      color: white;
+    }
+
+    /* Submit button appears at bottom right during selection */
+    .submit-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: none;
+      z-index: 200;
+    }
+
+    .submit-button:hover {
+      background: #2ecc71;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Reset button at bottom left during selection */
+    .reset-button {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: none;
+      z-index: 200;
+    }
+
+    .reset-button:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    /* Timer for symmetry overlay */
+    .symmetry-timer {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #e74c3c;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      min-width: 50px;
+      text-align: center;
+      z-index: 1100;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header matching the original exactly -->
+  <div class="header">
+    <div class="header-left">
+      <button class="control-btn" id="playBtn" onclick="togglePause()">▶</button>
+      <button class="control-btn" id="soundBtn">🔊</button>
+      <div class="level-indicator">Level <span id="levelNum">1</span></div>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-text" id="progressText">1</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="timer" id="timer">05:00</div>
+      <div class="game-title">Grid Challenge</div>
+    </div>
+  </div>
+
+  <!-- Main game area -->
+  <div class="main-content">
+    <!-- Start screen WITH timing controls -->
+    <div class="start-screen" id="startScreen">
+      <div class="start-content">
+        <h2 class="start-title">Grid Challenge</h2>
+        <p class="start-instruction">Set your preferences and start the challenge:</p>
+
+        <div class="timing-controls">
+          <div class="timing-input">
+            <label class="timing-label">Ball Time: <span id="ballTimeLabel">2.0s</span></label>
+            <input type="range" class="timing-slider" id="ballTimeSlider" min="1" max="5" step="0.1" value="2">
+          </div>
+          <div class="timing-input">
+            <label class="timing-label">Symmetry: <span id="symmetryTimeLabel">3.0s</span></label>
+            <input type="range" class="timing-slider" id="symmetryTimeSlider" min="1" max="8" step="0.1" value="3">
+          </div>
+        </div>
+
+        <button class="start-btn" onclick="startGame()">Start Game</button>
+      </div>
+    </div>
+
+    <!-- Symmetry overlay -->
+    <div class="symmetry-overlay" id="symmetryOverlay">
+      <div class="symmetry-timer" id="symmetryTimer">5</div>
+      <div class="symmetry-header">Is it Symmetric..?</div>
+      <div class="symmetry-content">
+        <div class="symmetry-question" id="symmetryQuestion">Mirror symmetry across red line?</div>
+        <div class="grid-container">
+          <div class="symmetry-grid" id="symmetryGrid">
+            <!-- Grid cells will be generated by JavaScript -->
+          </div>
+        </div>
+        <div class="symmetry-buttons">
+          <button class="symmetry-btn yes" onclick="answerSymmetry(true)">yes</button>
+          <button class="symmetry-btn no" onclick="answerSymmetry(false)">no</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MINIMAL selection UI - NO BLOCKING OVERLAYS -->
+    <div class="selection-progress" id="selectionProgress">
+      <div class="progress-info">Selected: <span id="selectedCount">0</span> / <span id="totalNeeded">3</span></div>
+    </div>
+
+    <button class="reset-button" id="resetButton" onclick="resetSelection()">Reset</button>
+    <button class="submit-button" id="submitButton" onclick="submitFinalAnswer()">Submit</button>
+
+    <!-- Game board - CLEAN VIEW for both playing and selection -->
+    <div class="game-board" id="gameBoard">
+      <div class="game-instruction" id="gameInstruction">Press Start to Begin!</div>
+    </div>
+  </div>
+
+  <script>
+    // Game state variables
+    let gameActive = false;
+    let gamePaused = false;
+    let level = 1;
+    let sequenceStep = 0;
+    let totalSteps = 6; // 3 balls + 3 symmetries
+    let gameTimer;
+    let timeLeft = 300; // 5 minutes
+    let currentProgress = 1;
+    let maxProgress = 6;
+
+    // LEVEL PROGRESSION VARIABLES
+    let levelAdvancementThreshold = 70; // Minimum overall score needed to advance level
+    let maxLevel = 100; // Maximum level in the game
+
+    // SEQUENCE-BASED tracking
+    let ballSequence = [];
+    let shownSequence = [];
+    let symmetryResults = [];
+    //let ballDisplayTime = 1000;
+    let ballDisplayTime = 1500;
+    let symmetryTime = 3000;
+    let selectedBallsInOrder = []; // Track selection order during final phase
+    let inSelectionPhase = false;
+
+    // Symmetry data
+    let symmetryTimer;
+    let symmetryTimeLeft = 0;
+    let currentSymmetryPattern = null;
+
+    // Expanded symmetry patterns
+    const symmetryPatterns = [
+      {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,
+                 1,0,0,0,0,0,1,0,1,0,1,
+                 1,0,1,0,0,0,1,0,1,0,1,
+                 1,0,0,0,0,0,1,0,1,1,1,
+                 1,1,1,1,1,0,1,1,0,0,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,
+                 1,0,0,0,0,0,0,0,0,0,1,
+                 1,1,1,1,1,0,1,1,1,1,1,
+                 0,0,0,0,1,0,1,0,0,0,0,
+                 1,1,1,1,1,0,1,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+       {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,
+                 1,0,0,0,0,0,1,0,1,0,1,
+                 1,0,1,0,0,0,1,0,1,0,1,
+                 1,0,0,0,0,0,1,0,1,1,1,
+                 1,1,1,1,1,0,1,1,0,0,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,
+                 1,0,0,0,0,0,0,0,0,0,1,
+                 1,1,1,1,1,0,1,1,1,1,1,
+                 0,0,0,0,1,0,1,0,0,0,0,
+                 1,1,1,1,1,0,1,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,0,1,0,1,0,0,1,1,
+                 0,1,1,0,0,0,0,0,1,1,0,
+                 1,0,1,1,0,0,0,1,1,0,1,
+                 0,0,1,0,1,0,1,0,1,0,0,
+                 1,1,0,0,1,0,1,0,0,1,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,0,0,0,0,1,1,1,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 1,1,1,0,0,0,0,0,1,1,1],
+        symmetric: true,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [0,1,1,1,0,0,0,1,1,1,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 1,1,0,1,1,0,1,1,0,1,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 0,1,1,1,0,0,0,1,1,1,0],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,0,0,1,0,1,0,0,0,1,
+                 0,1,1,1,0,0,0,1,1,1,0,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 0,1,1,1,0,0,0,1,1,1,0,
+                 1,0,0,0,1,0,1,0,0,0,1],
+        symmetric: true,
+        question: "Is this symmetric?"
+      },
+      {
+        pattern: [1,1,0,1,0,0,0,1,0,1,1,
+                 0,0,1,0,1,0,1,0,1,0,0,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 0,0,1,0,1,0,1,0,1,0,0,
+                 1,1,0,1,0,0,0,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,1,0,1,1,1,0,1,
+                 0,1,0,0,0,0,0,0,0,1,0,
+                 1,0,1,1,0,0,0,1,1,0,1,
+                 0,1,0,0,0,0,0,0,0,1,0,
+                 0,0,1,1,1,0,1,1,1,0,0],
+        symmetric: false,
+        question: "Is this pattern symmetric?"
+      },
+      {
+        pattern: [1,0,1,1,0,0,0,1,1,0,1,
+                 0,0,0,1,1,0,1,1,0,0,0,
+                 1,1,0,0,1,0,1,0,0,1,1,
+                 0,0,0,1,1,0,1,1,0,0,0,
+                 1,0,1,1,0,0,0,1,1,0,1],
+        symmetric: true,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,1,0,1,0,1,1,0,
+                 0,0,1,1,0,0,0,1,1,0,0,
+                 1,0,0,1,1,0,1,1,0,0,1,
+                 0,0,1,1,0,0,0,1,1,0,0,
+                 1,1,1,0,1,0,1,0,1,1,1],
+        symmetric: false,
+        question: "Is this symmetric?"
+      },
+      {
+        pattern: [0,0,0,1,1,0,1,1,0,0,0,
+                 0,1,1,0,1,0,1,0,1,1,0,
+                 1,0,1,1,0,0,0,1,1,0,1,
+                 0,1,1,0,1,0,1,0,1,1,0,
+                 0,0,0,1,1,0,1,1,0,0,0],
+        symmetric: true,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [1,0,0,1,1,0,1,1,0,0,1,
+                 0,1,0,0,1,0,1,0,0,1,0,
+                 0,0,1,1,0,0,0,1,1,0,0,
+                 0,1,0,0,1,0,1,0,0,1,0,
+                 1,0,0,1,1,0,1,1,0,1,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,0,0,0,0,0,0,1,1,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 1,1,0,0,0,0,0,0,0,1,1],
+        symmetric: true,
+        question: "Is this symmetric?"
+      },
+      {
+        pattern: [0,1,1,0,1,0,1,0,1,1,0,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 1,0,1,0,0,0,0,0,1,0,1,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 0,1,1,0,1,0,1,0,1,1,0],
+        symmetric: true,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [1,0,1,0,0,0,0,0,1,0,0,
+                 0,1,0,1,1,0,1,1,0,1,0,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 0,1,0,1,1,0,1,1,0,1,0,
+                 1,0,1,0,0,0,0,0,1,0,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,0,0,0,1,1,0,0,
+                 0,1,0,0,1,0,1,0,0,1,0,
+                 1,0,0,1,1,0,1,1,0,0,1,
+                 0,1,0,0,1,0,1,0,0,1,0,
+                 0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Is this pattern symmetric?"
+      },
+      {
+        pattern: [1,1,0,1,0,0,0,1,0,1,1,
+                 0,0,0,0,1,0,1,0,0,0,0,
+                 1,0,1,1,0,0,0,1,1,0,1,
+                 0,0,0,0,1,0,1,0,0,0,0,
+                 1,1,0,1,0,0,0,0,0,1,1],
+        symmetric: false,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [0,1,0,0,1,0,1,0,0,1,0,
+                 1,0,1,0,0,0,0,0,1,0,1,
+                 0,1,0,1,1,0,1,1,0,1,0,
+                 1,0,1,0,0,0,0,0,1,0,1,
+                 0,1,0,0,1,0,1,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 1,0,1,0,1,0,1,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,0,1,0,1,0,0,1,1,
+                 0,1,1,0,0,0,0,0,1,1,0,
+                 1,0,1,1,0,0,0,1,1,0,1,
+                 0,0,1,0,1,0,1,0,1,0,0,
+                 1,1,0,0,1,0,1,0,0,1,1],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,0,0,0,0,1,1,1,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 1,0,0,1,0,0,0,1,0,0,1,
+                 1,1,1,0,0,0,0,0,1,1,1],
+        symmetric: true,
+        question: "Perfect mirror symmetry?"
+      },
+      {
+        pattern: [0,1,1,1,0,0,0,1,1,1,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 1,1,0,1,1,0,1,1,0,1,1,
+                 1,0,0,0,1,0,1,0,0,0,1,
+                 0,1,1,1,0,0,0,1,1,1,0],
+        symmetric: false,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,0,0,1,0,1,0,0,0,1,
+                 0,1,1,1,0,0,0,1,1,1,0,
+                 0,1,0,1,0,0,0,1,0,1,0,
+                 0,1,1,1,0,0,0,1,1,1,0,
+                 1,0,0,0,1,0,1,0,0,0,1],
+        symmetric: true,
+        question: "Is this symmetric?"
+      },
+
+
+      {
+        pattern: [1,0,0,1,0,1,0,1,0,0,1,1,0,0,0,1,0,1,0,0,0,1,1,1,0,0,1,1,1,0,0,1,1,0,0,0,1,1,0,1,1,0,0,0,0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,0,0,0,0,0,1,1,0,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+        },
+      {
+        pattern: [0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [0,0,0,1,0,0,0,1,0,0,0,1,1,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,1,1,0,1,0,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,1,1,0,1,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,0,1,1,1,1,1,1,1,0,0,0,1,0,0,1,1,1,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,1,1,0,0,1,1,1,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    
+        },
+      {
+        pattern: [1,0,1,1,0,1,0,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,1,1,0,0,1,1,1,1,1,1,1,0,0,0,0,0,1,0,0,0,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,1,0,0,1,0,0,1,0,1,0,1,1,0,1,0,1,0,1,1,0,0,0,0,0,1,1,1,0,0,0,0,1,0,1,1,0,1,0,1,1,0,1,1,1,0,0,0,0,0,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,0,0,0,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,1,1,0,0,1,0,0,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1,0,0,1,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,0,1,1,1,1,1,1,0,0,1,0,1,0,1,0,0,1,1,0,1,1,0,0,0,1,1,0,1,0,0,1,0,1,1,1,0,1,0,0,0,0,1,0,1,0,1,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,0,1,0,1,0,1,0,0,0,0,1,1,0,1,0,1,0,1,1,0,1,0,1,1,0,0,0,1,1,0,1,0,0,0,1,1,0,1,1,0,0,0,1,1,0,0,0,1,0,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,0,1,0,1,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1,1,0,1,0,0,0,1,0,1,1,0,1,0,0,0,1,0,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,0,1,0,1,0,0,1,0,0,1,1,1,0,1,0,1,1,1,0,0,1,0,1,1,0,1,1,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,0,0,1,1,1,1,1,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,1,0,0,0,1,1,1,0,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,0,1,0,1,0,0,1,1,0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,0,1,0,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,1,0,0,1,0,1,0,1,0,0,1,1,0,0,1,0,0,0,1,0,0,1,1,1,1,1,0,0,0,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,1,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,1,1,0,0,0,0,0,1,1,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,1,1,1,1,0,1,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,0,0,0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,0,1,0,0,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,0,1,1,1,1,1,1,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,0,0,0,0,0,1,1,0,0,1,1,0,1,0,1,0,1,1,0,0,1,0,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0,0,1,1,1,0,1,1,0,0,0,0,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"   },
+      {
+        pattern: [1,1,1,1,0,0,0,1,1,1,1,1,0,1,0,0,1,0,0,1,0,1,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,0,1,0,1,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,1,0,0,0,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,0,0,0,0,0,0,0,0,1,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,1,0,1,1,0,0,1,0,1,1,0,0,0,0,0,1,1,0,0,0,1,0,0,1,0,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"   },
+      {
+        pattern: [0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0,1,1,0,1,1,0,0,1,1,1,0,0,1,0,1,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,0,0,1,1,1,0,0,0,1,1,1,0,1,1,1,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,1,1,0,1,0,1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"   },
+      {
+        pattern: [1,0,0,1,1,0,1,1,0,0,1,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,1,0,1,0,0,1,1,1,1,0,0,1,0,1,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,0,1,1,1,1,1,1,1,0,0,1,0,1,1,1,1,1,1,1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,1,1,1,1,0,1,1,1,1,0,0,0,1,0,0,1,0,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,1,1,1,1,1,0,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,0,1,0,1,0,1,0,1,0,1,0,0,1,1,0,1,0,1,1,0,0,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,1,1,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"      },
+      {
+        pattern: [0,1,0,1,0,0,0,1,0,1,0,1,1,1,1,0,0,0,1,1,1,1,0,1,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,0,0,0,1,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,0,0,0,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,0,1,1,1,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,0,1,1,0,1,1,0,1,1,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,0,1,1,1,0,0,0,0,0,1,0,1,0,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"      },
+      {
+        pattern: [1,0,0,1,1,0,1,1,0,0,1,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"    },
+      {
+        pattern: [1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,0,0,0,1,0,0,0,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,1,0,0,0,1,1,1,1,0,1,0,1,0,0,0,1,0,1,0,1,1,0,0,1,1,1,0,0,1,1,0,0,1,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,0,0,0,0,0,1,1,0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,1,0,1,1,0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"      },
+      {
+        pattern: [1,0,1,0,0,0,0,0,1,0,1,1,0,1,0,0,1,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,0,1,0,0,0,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,0,1,1,1,1,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,1,1,0,1,0,1,0,1,1,1,0,1,1,1,1,0,1,1,1,1,0,0,1,1,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,1,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"     },
+      {
+        pattern: [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,0,1,0,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"      },
+      {
+        pattern: [1,1,0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,1,0,1,0,1,1,0,1,1,0,0,1,1,1,0,0,1,1,0,1,0,1,0,1,0,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,0,0,0,1,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1,0,1,0,1,1,0,0,1,0,1,0,0,1,0,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,0,1,0,1,0,1,1,0,0,1,0,1,1,1,0,1,0,0,1,0,1,0,1,1,1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,1,1,1,1,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,1,0,0,1,0,0,1,0,1,1,1,0,1,0,0,0,1,0,1,1,1,1,0,0,0,1,0,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,1,0,1,0,1,1,1,1,0,0,1,1,1,1,1,0,0,1,0,0,1,1,0,0,0,1,1,0,0,0,1,0,0,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,1,1,1,1,1,0,1,0,1,1,0,0,1,0,1,0,0,1,1,0,1,1,0,1,0,1,0,1,1,0,0,0,0,0,1,0,1,0,0,0,0,1,1,0,1,0,1,0,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,1,0,0,1,0,0,1,1,1,1,1,0,1,0,1,0,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [0,1,1,0,0,1,0,0,1,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,1,1,1,1,1,1,0,0,1,1,0,1,0,0,0,1,0,1,1,1,1,0,1,1,0,1,1,0,1,1,0,0,1,0,1,1,1,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,0,1,1,0,0,1,0,1,0,1,1,1,0,1,0,1,0,1,0,0,1,1,1,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,1,0,1,0,1,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line"     },
+      {
+        pattern: [0,0,0,1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,1,1,1,0,0,1,1,0,0,0,0,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1,0,0,1,0,1,1,1,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,1,0,0,0,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,1,1,1,0,0,0,1,1,1,0,0,0,0,1,1,0,1,1,0,0,0,0,1,1,1,1,0,1,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,0,0,1,0,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,0,1,0,0,0,1,0,1,0,0,0,1,1,1,0,1,0,1,0,1,0,1,1,0,0,0,1,1,0,1,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,0,0,1,1,1,0,0,0,1,0,1,0,0,1,1,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,0,0,0,0,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,0,1,0,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,0,1,1,1,0,0,1,1,1,1,1,1,1,0,0,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,0,0,1,1,1,0,0,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0,1,0,0,1,1,1,1,0,1,0,0,0,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,1,0,0,1,0,0,1,1,1,1,0,0,0,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,0,1,0,0,1,1,1,1,1,1,0,0,0,0,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,0,1,1,1,0,1,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,1,1,1,0,1,1,1,1,0,0,0,0,1,0,1,0,1,0,0,0,1,1,1,1,0,1,0,1,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,0,1,0,0,0,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,0,0,0,0,1,0,0,0,0,1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,0,0,1,0,0,1,0,1,0,1,1,1,1,0,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,1,0,0,0,1,0,0,1,1,0,1,0,1,1,1,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,1,1,1,1,1,0,1,0,0,0,1,0,1,0,1,0,1,0,0,1,1,0,1,0,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,1,0,1,0,1,0,1,0,0,0,1,1,1,0,1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,1,1,0,1,1,1,1,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,0,1,1,1,0,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,0,1,1,1,0,0,0,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,1,0,1,1,1,0,1,1,0,1,0,0,0,1,1,1,0,0,0,1,0,1,1,0,0,0,0,0,1,1,0,0,0,1,1,0,1,0,1,1,0,0,1,1,1,0,0,0,0,0,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,0,1,0,1,0,1,1,1,0,0,1,1,0,1,1,0,0,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,1,1,1,0,0,1,0,1,1,1,0,0,1,0,0,1,1,1,0,1,1,1,0,0,0,1,1,1,0,0,1,0,1,1,0,1,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,1,0,1,0,1,1,0,1,1,1,0,0,1,1,1,0,0,1,1,1,1,0,1,0,0,0,1,0,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,0,0,0,1,0,0,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,1,0,1,0,1,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,0,0,1,0,0,1,0,1,0,1,0,0,1,1,1,0,0,1,0,0,1,1,1,0,0,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,0,1,1,0,1,1,1,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,1,0,1,0,1,1,1,0,0,0,1,0,0,0,1,0,0,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,0,0,0,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,0,0,0,1,0,0,0,1,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,1,1,0,0,0,1,1,0,1,1,0,1,1,0,1,0,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,1,0,1,0,0,1,0,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,0,0,1,1,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,1,1,1,1,1,0,1,0,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,1,0,1,1,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,1,1,1,0,1,0,0,1,1,0,1,0,1,0,1,1,0,0,0,0,1,1,0,1,1,0,0,0,0,1,0,1,0,1,0,1,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,1,0,1,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"    },
+      {
+        pattern: [1,0,0,0,0,0,0,0,0,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,0,0,0,0,0,1,1,0,1,0,0,1,0,0,0,1,0,0,1,1,0,1,0,0,0,0,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,0,0,1,0,1,0,1,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,1,1,1,1,1,1,1,1,0,1,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,1,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,0,0,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across```d line?"
+      },
+      {
+        pattern: [0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1,1,1,0,1,1,1,0,0,1,0,1,1,1,0,1,1,1,0,1,0,0,1,0,0,1,0,0,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,1,0,1,0,0,1,1,0,0,1,0,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,1,0,1,0,1,0,0,1,0,0,1,0,0,1,0,0,0,0,1,1,0,0,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,0,0,0,1,0,1,1,1,0,0,0,1,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,0,1,1,0,1,1,0,0,0,1,1,1,0,0,1,0,0,1,1,1,0,0,1,1,0,0,0,1,1,0,0,1,1,0,0,0,1,0,0,0,1,1,0,1,1,0,0,1,0,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,0,0,1,1,0,1,0,1,1,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,0,1,1,1,1,1,1,1,0,1,0,0,1,1,1,0,1,1,1,0,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,1,0,1,1,0,1,1,0,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,1,0,1,1,0,0,0,1,1,0,0,1,0,0,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,0,1,0,0,0,1,1,0,1,1,1,0,0,0,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,0,1,0,1,1,1,0],
+        symmetric: true,
+        question: "Mirror symmetry across red line?"
+      },
+      {
+        pattern: [1,1,0,1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,0,1,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1,0,1,1,0,1,0,0,0,0,0,1,0,1],
+        symmetric: true,
+        question: "Mirror symmetry across"
+      }
+
+
+
+    ];
+
+    function initGame() {
+      updateTimer();
+      updateProgress();
+      gameTimer = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      if (!gamePaused && gameActive) {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.getElementById("timer").textContent = 
+          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        if (timeLeft > 0) {
+          timeLeft--;
+        } else {
+          endGame("Time's Up!");
+        }
+      }
+    }
+
+    function updateProgress() {
+      const percentage = (currentProgress / maxProgress) * 100;
+      document.getElementById("progressFill").style.width = percentage + "%";
+      document.getElementById("progressText").textContent = currentProgress;
+    }
+
+    function updateLevel() {
+      document.getElementById("levelNum").textContent = level;
+    }
+
+    // Enhanced createBalls function with better level scaling
+    function createBalls() {
+      const gameBoard = document.getElementById("gameBoard");
+      const existingBalls = gameBoard.querySelectorAll('.ball');
+      existingBalls.forEach(ball => ball.remove());
+
+      // More challenging progression: more balls per level
+      const ballCount = 15 + (level * 4); // Level 1: 19 balls, Level 2: 23 balls, etc.
+      const positions = [];
+      const boardRect = gameBoard.getBoundingClientRect();
+
+      ballSequence = [];
+
+      for (let i = 0; i < ballCount; i++) {
+        let x, y;
+        let attempts = 0;
+        do {
+          x = Math.random() * (boardRect.width - 80) + 10;
+          y = Math.random() * (boardRect.height - 140) + 60;
+          attempts++;
+        } while (isOverlapping(x, y, positions, 60, 20) && attempts < 100);
+
+        positions.push({x, y});
+
+        const ball = document.createElement("div");
+        ball.classList.add("ball");
+        ball.dataset.index = i;
+        ball.style.left = x + "px";
+        ball.style.top = y + "px";
+
+        ball.addEventListener('click', (e) => handleBallClick(i, e));
+        gameBoard.appendChild(ball);
+
+        ballSequence.push({
+          index: i,
+          x: x,
+          y: y
+        });
+      }
+    }
+
+    function isOverlapping(x, y, positions, size = 60, padding = 20) {
+      for (let pos of positions) {
+        const dx = pos.x - x;
+        const dy = pos.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < size + padding) return true;
+      }
+      return false;
+    }
+
+    function handleBallClick(ballIndex, event) {
+      if (inSelectionPhase) {
+        const ball = document.querySelector(`[data-index="${ballIndex}"]`);
+
+        // Check if already selected
+        if (ball.classList.contains('selected')) {
+          // Remove selection
+          ball.classList.remove('selected');
+          ball.removeAttribute('data-sequence-number');
+          selectedBallsInOrder = selectedBallsInOrder.filter(item => item.ballIndex !== ballIndex);
+          updateSelectionDisplay();
+          return;
+        }
+
+        // Add selection
+        selectedBallsInOrder.push({
+          ballIndex: ballIndex,
+          selectionOrder: selectedBallsInOrder.length + 1
+        });
+
+        ball.classList.add('selected');
+        ball.setAttribute('data-sequence-number', selectedBallsInOrder.length);
+        updateSelectionDisplay();
+      }
+    }
+
+    function updateSelectionDisplay() {
+      document.getElementById('selectedCount').textContent = selectedBallsInOrder.length;
+    }
+
+    function startGame() {
+      // Setup timing controls
+      setupTimingSliders();
+
+      document.getElementById("startScreen").style.display = "none";
+      gameActive = true;
+      document.getElementById("playBtn").textContent = "⏸";
+
+      sequenceStep = 0;
+      currentProgress = 1;
+      shownSequence = [];
+      symmetryResults = [];
+      inSelectionPhase = false;
+
+      updateLevel();
+      initGame();
+      createBalls();
+      startSequence();
+    }
+
+    function startSequence() {
+      if (sequenceStep >= totalSteps) {
+        showSelectionPhase();
+        return;
+      }
+
+      if (sequenceStep % 2 === 0) {
+        showBall();
+      } else {
+        showSymmetry();
+      }
+    }
+
+    function showBall() {
+      const ballIndex = Math.floor(Math.random() * ballSequence.length);
+      const ball = document.querySelector(`[data-index="${ballIndex}"]`);
+
+      document.getElementById("gameInstruction").textContent = 
+        `Remember this ball! (${ballDisplayTime/1000}s) - Sequence #${shownSequence.length + 1}`;
+
+      if (ball) {
+        ball.classList.add("active");
+
+        shownSequence.push({
+          ballIndex: ballIndex,
+          sequenceOrder: shownSequence.length + 1,
+          timing: ballDisplayTime,
+          step: sequenceStep
+        });
+
+        setTimeout(() => {
+          ball.classList.remove("active");
+          sequenceStep++;
+          currentProgress++;
+          updateProgress();
+
+          setTimeout(() => {
+            startSequence();
+          }, 300);
+        }, ballDisplayTime);
+      }
+    }
+
+    function showSymmetry() {
+      const pattern = symmetryPatterns[Math.floor(Math.random() * symmetryPatterns.length)];
+      const overlay = document.getElementById("symmetryOverlay");
+      const grid = document.getElementById("symmetryGrid");
+      const question = document.getElementById("symmetryQuestion");
+
+      question.textContent = pattern.question;
+      currentSymmetryPattern = pattern;
+
+      grid.innerHTML = "";
+      pattern.pattern.forEach(cell => {
+        const div = document.createElement("div");
+        div.className = cell === 1 ? "grid-cell" : "grid-cell dot";
+        grid.appendChild(div);
+      });
+
+      overlay.style.display = "flex";
+      startSymmetryTimer();
+    }
+
+    function startSymmetryTimer() {
+      symmetryTimeLeft = Math.ceil(symmetryTime / 1000);
+      document.getElementById("symmetryTimer").textContent = symmetryTimeLeft;
+
+      symmetryTimer = setInterval(() => {
+        symmetryTimeLeft--;
+        document.getElementById("symmetryTimer").textContent = symmetryTimeLeft;
+
+        if (symmetryTimeLeft <= 0) {
+          clearInterval(symmetryTimer);
+          answerSymmetry(false);
+        }
+      }, 1000);
+    }
+
+    function answerSymmetry(userAnswer) {
+      clearInterval(symmetryTimer);
+      const isCorrect = userAnswer === currentSymmetryPattern.symmetric;
+
+      symmetryResults.push({
+        pattern: currentSymmetryPattern,
+        userAnswer: userAnswer,
+        correct: isCorrect,
+        step: sequenceStep
+      });
+
+      setTimeout(() => {
+        document.getElementById("symmetryOverlay").style.display = "none";
+        sequenceStep++;
+        currentProgress++;
+        updateProgress();
+
+        setTimeout(() => {
+          startSequence();
+        }, 300);
+      }, 800);
+    }
+
+    function showSelectionPhase() {
+      inSelectionPhase = true;
+      selectedBallsInOrder = [];
+
+      // Show MINIMAL UI - NO BLOCKING OVERLAY
+      document.getElementById("selectionProgress").style.display = "block";
+      document.getElementById("resetButton").style.display = "block";
+      document.getElementById("submitButton").style.display = "block";
+
+      document.getElementById("gameInstruction").textContent = "Click the 3 balls in the same order!";
+      document.getElementById("totalNeeded").textContent = shownSequence.length;
+      updateSelectionDisplay();
+    }
+
+    function setupTimingSliders() {
+      const ballSlider = document.getElementById("ballTimeSlider");
+      const symmetrySlider = document.getElementById("symmetryTimeSlider");
+
+      ballSlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        document.getElementById("ballTimeLabel").textContent = value + "s";
+        ballDisplayTime = value * 1000;
+      });
+
+      symmetrySlider.addEventListener('input', (e) => {
+        const value = parseFloat(e.target.value);
+        document.getElementById("symmetryTimeLabel").textContent = value + "s";
+        symmetryTime = value * 1000;
+      });
+    }
+
+    function resetSelection() {
+      selectedBallsInOrder = [];
+      document.querySelectorAll('.ball.selected').forEach(ball => {
+        ball.classList.remove('selected');
+        ball.removeAttribute('data-sequence-number');
+      });
+      updateSelectionDisplay();
+    }
+
+    // MODIFIED submitFinalAnswer function with level progression logic
+    function submitFinalAnswer() {
+      const correctSequence = shownSequence.map(item => item.ballIndex);
+      const userSequence = selectedBallsInOrder.map(item => item.ballIndex);
+
+      let correctSelections = 0;
+      const totalNeeded = correctSequence.length;
+
+      // Check if selected balls match the correct sequence in order
+      for (let i = 0; i < Math.min(userSequence.length, correctSequence.length); i++) {
+        if (userSequence[i] === correctSequence[i]) {
+          correctSelections++;
+        }
+      }
+
+      const ballScore = Math.round((correctSelections / totalNeeded) * 100);
+      const symmetryCorrect = symmetryResults.filter(r => r.correct).length;
+      const symmetryScore = Math.round((symmetryCorrect / symmetryResults.length) * 100);
+      const overallScore = Math.round((ballScore + symmetryScore) / 2);
+
+      // Check if player qualifies for level advancement
+      if (overallScore >= levelAdvancementThreshold) {
+        if (level < maxLevel) {
+          // Advance to next level
+          level++;
+          alert(`Excellent! Level ${level - 1} Complete!\n\nSequence Memory: ${ballScore}% (${correctSelections}/${totalNeeded})\nSymmetry: ${symmetryScore}% (${symmetryCorrect}/${symmetryResults.length})\n\nOverall: ${overallScore}%\n\n🎉 ADVANCING TO LEVEL ${level}! 🎉`);
+          
+          setTimeout(() => {
+            startNextLevel();
+          }, 2000);
+        } else {
+          // Player has completed all levels
+          alert(`🏆 GAME COMPLETED! 🏆\n\nYou've mastered all ${maxLevel} levels!\n\nFinal Level Performance:\nSequence Memory: ${ballScore}% (${correctSelections}/${totalNeeded})\nSymmetry: ${symmetryScore}% (${symmetryCorrect}/${symmetryResults.length})\n\nOverall: ${overallScore}%\n\nCongratulations, Memory Master!`);
+          
+          setTimeout(() => {
+            restartGame();
+          }, 3000);
+        }
+      } else {
+        // Player needs to retry current level
+        alert(`Level ${level} - Try Again!\n\nSequence Memory: ${ballScore}% (${correctSelections}/${totalNeeded})\nSymmetry: ${symmetryScore}% (${symmetryCorrect}/${symmetryResults.length})\n\nOverall: ${overallScore}%\n\nNeed ${levelAdvancementThreshold}% or higher to advance!\n\n🔄 Retrying Level ${level}`);
+        
+        setTimeout(() => {
+          retryCurrentLevel();
+        }, 2000);
+      }
+    }
+
+    // NEW function to start the next level
+    function startNextLevel() {
+      gameActive = false;
+      gamePaused = false;
+      clearInterval(gameTimer);
+      inSelectionPhase = false;
+
+      // Hide selection UI
+      document.getElementById("selectionProgress").style.display = "none";
+      document.getElementById("resetButton").style.display = "none";
+      document.getElementById("submitButton").style.display = "none";
+      
+      // Hide overlays
+      document.getElementById("symmetryOverlay").style.display = "none";
+
+      // Reset sequence variables for new level
+      sequenceStep = 0;
+      currentProgress = 1;
+      shownSequence = [];
+      symmetryResults = [];
+      timeLeft = 300; // Reset timer for new level
+
+      // Update UI for new level
+      updateLevel();
+      updateProgress();
+      updateTimer();
+
+      // Show brief level intro
+      document.getElementById("gameInstruction").textContent = `Level ${level} - Get Ready!`;
+      
+      // Start new level after brief pause
+      setTimeout(() => {
+        gameActive = true;
+        document.getElementById("playBtn").textContent = "⏸";
+        initGame();
+        createBalls(); // This will create more balls based on new level
+        startSequence();
+      }, 1500);
+    }
+
+    // NEW function to retry current level
+    function retryCurrentLevel() {
+      gameActive = false;
+      gamePaused = false;
+      clearInterval(gameTimer);
+      inSelectionPhase = false;
+
+      // Hide selection UI
+      document.getElementById("selectionProgress").style.display = "none";
+      document.getElementById("resetButton").style.display = "none";
+      document.getElementById("submitButton").style.display = "none";
+      
+      // Hide overlays
+      document.getElementById("symmetryOverlay").style.display = "none";
+
+      // Reset sequence variables for retry
+      sequenceStep = 0;
+      currentProgress = 1;
+      shownSequence = [];
+      symmetryResults = [];
+      timeLeft = 300; // Reset timer for retry
+
+      // Update UI
+      updateProgress();
+      updateTimer();
+
+      // Show retry message
+      document.getElementById("gameInstruction").textContent = `Level ${level} - Try Again!`;
+      
+      // Start level retry after brief pause
+      setTimeout(() => {
+        gameActive = true;
+        document.getElementById("playBtn").textContent = "⏸";
+        initGame();
+        createBalls(); // Create balls for same level
+        startSequence();
+      }, 1500);
+    }
+
+    // MODIFIED restartGame to properly reset to level 1
+    function restartGame() {
+      gameActive = false;
+      gamePaused = false;
+      clearInterval(gameTimer);
+      inSelectionPhase = false;
+
+      // Hide selection UI
+      document.getElementById("selectionProgress").style.display = "none";
+      document.getElementById("resetButton").style.display = "none";
+      document.getElementById("submitButton").style.display = "none";
+
+      document.getElementById("startScreen").style.display = "flex";
+      document.getElementById("symmetryOverlay").style.display = "none";
+
+      // Reset to level 1
+      level = 1;
+      sequenceStep = 0;
+      currentProgress = 1;
+      timeLeft = 300;
+
+      updateLevel();
+      updateProgress();
+      updateTimer();
+
+      document.getElementById("playBtn").textContent = "▶";
+      document.getElementById("gameInstruction").textContent = "Press Start to Begin!";
+    }
+
+    function togglePause() {
+      if (!gameActive) return;
+
+      if (gamePaused) {
+        resumeGame();
+      } else {
+        pauseGame();
+      }
+    }
+
+    function pauseGame() {
+      gamePaused = true;
+      document.getElementById("playBtn").textContent = "▶";
+      document.getElementById("gameInstruction").textContent = "Game Paused";
+    }
+
+    function resumeGame() {
+      gamePaused = false;
+      document.getElementById("playBtn").textContent = "⏸";
+    }
+
+    function endGame(message) {
+      gameActive = false;
+      clearInterval(gameTimer);
+      alert(message);
+      setTimeout(restartGame, 1000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (document.getElementById("symmetryOverlay").style.display === "flex") {
+        switch(e.key.toLowerCase()) {
+          case 'y':
+          case '1':
+            answerSymmetry(true);
+            break;
+          case 'n':
+          case '2':
+            answerSymmetry(false);
+            break;
+        }
+      }
+    });
+
+    // Initialize on page load
+    window.addEventListener('load', () => {
+      updateLevel();
+      updateProgress();
+      updateTimer();
+    });
+  </script>
+</body>
+</html>
